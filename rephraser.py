@@ -9,6 +9,8 @@ def parse_arguments():
         description="Rephrase a sentence using OpenAI's gpt-3.5-turbo with a specified tone."
     )
     parser.add_argument("sentence", help="The sentence you want to rephrase.")
+    parser.add_argument("--model", help="The model to use for rephrasing (default: gpt-4o).", default="gpt-4o")
+    parser.add_argument("--prompt", help="The prompt to use for rephrasing.", default="")
     
     # Create a mutually exclusive group without the 'required' flag.
     tone_group = parser.add_mutually_exclusive_group()
@@ -35,12 +37,14 @@ def determine_tone(args):
         # This should not occur because one option is required.
         return "neutral"
 
-def rephrase_sentence(sentence: str, tone: str, client: openai.Client) -> str:
+def rephrase_sentence(sentence: str, tone: str, client: openai.Client, model: str, prompt: str) -> str:
     # Build the conversation messages for ChatCompletion
     system_message = "You are a helpful assistant that rephrases text."
     user_prompt = f"Rephrase the following sentence in a {tone} tone without including any quotes:\n\n\"{sentence}\""
+    if prompt != "":
+        user_prompt = f"{prompt}\n\n{user_prompt}"
 
-    response = client.chat.completions.create(model="gpt-3.5-turbo",
+    response = client.chat.completions.create(model=model,
     messages=[
         {"role": "system", "content": system_message},
         {"role": "user", "content": user_prompt}
@@ -48,7 +52,7 @@ def rephrase_sentence(sentence: str, tone: str, client: openai.Client) -> str:
     temperature=0.7)
 
     # Extract and return the rephrased sentence.
-    return response.choices[0].message.content.strip()
+    return (response.choices[0].message.content or "").strip()
 
 def main():
     args = parse_arguments()
@@ -62,7 +66,7 @@ def main():
     client = openai.OpenAI(api_key=api_key)
 
     try:
-        rephrased = rephrase_sentence(args.sentence, tone, client)
+        rephrased = rephrase_sentence(args.sentence, tone, client, args.model, args.prompt)
         print("\nRephrased sentence:")
         print(rephrased)
         # Copy the rephrased sentence to the clipboard on macOS using pbcopy.
