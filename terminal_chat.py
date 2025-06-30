@@ -2,6 +2,7 @@
 import argparse
 import os
 import openai
+import readline
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
@@ -44,8 +45,17 @@ def main():
     conversation_history = [{"role": "system", "content": args.system_prompt}]
 
     print(f"Starting chat with {args.model}. Type 'exit' or 'quit' to end.")
+    print("Keyboard shortcuts enabled:")
+    print("  - Arrow keys: navigate text")
+    print("  - Ctrl+A: beginning of line")
+    print("  - Ctrl+E: end of line")
+    print("  - Ctrl+K: delete to end")
+    print("  - Ctrl+U: delete to beginning")
+    print("  - Up/Down arrows: command history")
     print("System:", args.system_prompt)
-    print("-" * 30)
+    print("-" * 50)
+
+    readline.set_startup_hook(None)
 
     while True:
         try:
@@ -71,6 +81,9 @@ def main():
 
         except KeyboardInterrupt:
             print("\nExiting chat due to interrupt.")
+            break
+        except EOFError:
+            print("\nExiting chat.")
             break
         except Exception as e:
             print(f"An unexpected error occurred: {e}")
